@@ -4,6 +4,8 @@
 
 Built for Sagard Real Estate ($5.2B AUM, formerly EverWest), Deal Digest turns unstructured deal text into a scored investment screen, live market intel, and comparable deal patterns — all reviewed by a human before submission to the Investment Committee.
 
+![Deal Scout screening output](docs/screenshot.jpg)
+
 ---
 
 ## What it does
@@ -178,6 +180,9 @@ deal-digest/
 ├── proxy.ps1                     # Local CORS proxy — keeps API key server-side
 ├── START.bat                     # Windows launcher: starts proxy then opens app
 ├── deal_digest_n8n_final.json    # n8n workflow — import via n8n → Workflows → Import
+├── artifact-output.html          # Sample Claude artifact output (rendered in claude.ai)
+├── docs/
+│   └── screenshot.jpg            # Deal Scout output screenshot
 └── README.md
 ```
 
