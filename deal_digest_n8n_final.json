@@ -1,0 +1,256 @@
+{
+  "name": "Deal Digest — Sagard Real Estate",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [140, 300],
+      "notes": "Click 'Execute workflow' in n8n to start. For production replace with Webhook Trigger."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-raw",
+              "name": "raw_text",
+              "value": "Class A industrial portfolio of 3 buildings along Denver metro I-70 corridor. 94% leased with WALT of 4.2 years. Major tenants are regional distribution and e-commerce fulfillment companies. Recent cap-ex improvements to dock doors and HVAC. Seller is a private fund with wind-down timeline. Asking $42.5M at 5.60% cap rate, 285,000 SF, $149 per SF.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-set",
+      "name": "Set Deal Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [340, 300],
+      "notes": "Hardcoded deal text for demo. In production this comes from the Webhook body, email parser, or Slack command."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "YOUR_ANTHROPIC_API_KEY_HERE" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "content-type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"You are a real estate deal intake agent. Extract structured deal data from this text. Return ONLY valid JSON, no markdown:\\n{\\\"deal_name\\\":\\\"\\\",\\\"asset_type\\\":\\\"\\\",\\\"location\\\":\\\"\\\",\\\"price_usd\\\":0,\\\"noi_usd\\\":0,\\\"cap_rate_pct\\\":0,\\\"sqft\\\":0,\\\"occupancy_pct\\\":0,\\\"walt_years\\\":0,\\\"description\\\":\\\"\\\",\\\"confidence\\\":0.0,\\\"missing_fields\\\":[],\\\"inferred_fields\\\":[]}\\n\\nText: {{ $json.raw_text }}\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-intake",
+      "name": "Agent 1 — Intake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [560, 300],
+      "notes": "Intake agent: reads any input format and extracts a structured deal JSON. Confidence score < 0.7 should trigger human confirmation (add IF node in production)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Claude response and extract the JSON deal object\nconst content = items[0].json.content || [];\nconst textBlock = content.find(b => b.type === 'text');\nif (!textBlock) throw new Error('No text block in intake response');\n\nlet raw = textBlock.text.trim();\nraw = raw.replace(/^```json\\s*/,'').replace(/```\\s*$/,'').trim();\n\nconst deal = JSON.parse(raw);\nconsole.log('Intake extracted:', JSON.stringify(deal, null, 2));\n\nreturn [{ json: deal }];"
+      },
+      "id": "node-parse-intake",
+      "name": "Parse Intake JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 300],
+      "notes": "Strips markdown fences and parses the intake agent JSON. If parsing fails check the intake prompt is returning pure JSON."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "YOUR_ANTHROPIC_API_KEY_HERE" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "content-type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 600,\n  \"tools\": [{\"type\": \"web_search_20250305\", \"name\": \"web_search\"}],\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"You are a market intelligence agent. Search for current cap rates, vacancy rates, and rent trends for {{ $json.asset_type }} assets in {{ $json.location }}. Return 3-4 sentences with specific current data points. Plain text only, no JSON.\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-market",
+      "name": "Agent 2 — Market Intel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 180],
+      "notes": "Market intelligence agent: uses Claude web search to find live submarket data — cap rates, vacancy, rent trends. Runs in parallel with Comparables agent."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "past_deals",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "node-sheets",
+      "name": "Read Past Deals — Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1000, 420],
+      "notes": "Reads all rows from the past_deals sheet. Replace YOUR_GOOGLE_SHEET_ID_HERE with your actual Sheet ID from the URL. Requires Google Sheets OAuth2 credential."
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "node-merge",
+      "name": "Merge Agents",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1220, 300],
+      "notes": "Waits for both Market Intel and Google Sheets to complete, then merges outputs for the Screening agent."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "YOUR_ANTHROPIC_API_KEY_HERE" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "content-type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1200,\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"You are a senior investment analyst at Sagard Real Estate ($5.2B AUM, formerly EverWest). Screen this deal and return ONLY valid JSON, no markdown fences:\\n{\\n  \\\"criteriaScreen\\\": [{\\\"criterion\\\":\\\"\\\",\\\"status\\\":\\\"pass|warn|fail\\\",\\\"note\\\":\\\"\\\"}],\\n  \\\"keyRisks\\\": [{\\\"risk\\\":\\\"\\\",\\\"severity\\\":\\\"high|medium|low\\\",\\\"detail\\\":\\\"\\\"}],\\n  \\\"marketContext\\\": \\\"\\\",\\n  \\\"marketSources\\\": [],\\n  \\\"recommendation\\\": \\\"proceed_to_ic|more_diligence|pass\\\",\\n  \\\"recommendationRationale\\\": \\\"\\\",\\n  \\\"icQuestions\\\": []\\n}\\n\\nDeal: {{ JSON.stringify($node['Parse Intake JSON'].json) }}\\nMarket context from web search: {{ ($node['Agent 2 — Market Intel'].json.content || []).filter(b => b.type === 'text').map(b => b.text).join('') }}\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-screen",
+      "name": "Agent 3 — Screening",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 300],
+      "notes": "Screening agent: scores deal against 6 investment criteria, flags risks, produces recommendation and IC questions. Uses market intel from Agent 2."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "YOUR_ANTHROPIC_API_KEY_HERE" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "content-type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"You are a comparables analyst at Sagard Real Estate. Find the 3 most relevant past deals and identify patterns. Return ONLY valid JSON, no markdown:\\n{\\\"matches\\\":[{\\\"deal_name\\\":\\\"\\\",\\\"similarity\\\":\\\"high|medium|low\\\",\\\"similarity_reasons\\\":[],\\\"key_differences\\\":[],\\\"ic_outcome\\\":\\\"\\\",\\\"lesson\\\":\\\"\\\"}],\\\"patternNote\\\":\\\"\\\"}\\n\\nCurrent deal: {{ JSON.stringify($node['Parse Intake JSON'].json) }}\\nPast deals: {{ JSON.stringify($node['Read Past Deals — Google Sheets'].json) }}\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-comps",
+      "name": "Agent 4 — Comparables",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 460],
+      "notes": "Comparables agent: scores past deals against current deal, finds top 3 matches, identifies patterns across IC decisions. Reads from Google Sheets via node-sheets."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "YOUR_ANTHROPIC_API_KEY_HERE" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "content-type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1000,\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"You are a chief of staff at Sagard Real Estate. Write a concise IC memo draft (plain text, no JSON) for the Investment Committee. Include: 1) Executive summary (2 sentences), 2) Recommendation with rationale, 3) Top 3 risks, 4) Comparable deal patterns, 5) IC questions to resolve.\\n\\nDeal: {{ JSON.stringify($node['Parse Intake JSON'].json) }}\\nScreening: {{ ($node['Agent 3 — Screening'].json.content || []).filter(b => b.type === 'text').map(b => b.text).join('') }}\\nComparables: {{ ($node['Agent 4 — Comparables'].json.content || []).filter(b => b.type === 'text').map(b => b.text).join('') }}\"\n  }]\n}",
+        "options": {}
+      },
+      "id": "node-synthesis",
+      "name": "Agent 5 — Synthesis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1660, 380],
+      "notes": "Synthesis agent: merges screening + comparables into a clean IC memo draft. This is what the analyst reviews and edits before submission."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the final IC memo text from Claude response\nconst content = items[0].json.content || [];\nconst textBlock = content.find(b => b.type === 'text');\nconst memo = textBlock ? textBlock.text : 'No memo generated';\n\nconsole.log('=== DEAL DIGEST COMPLETE ===');\nconsole.log(memo);\nconsole.log('=== READY FOR HUMAN REVIEW ===');\n\nreturn [{ json: { ic_memo: memo, status: 'awaiting_human_review', timestamp: new Date().toISOString() } }];"
+      },
+      "id": "node-output",
+      "name": "Output — Ready for Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1880, 380],
+      "notes": "Final output node. In production: (1) send memo to analyst via email/Slack, (2) wait for human approval, (3) on approval post to #ic-deal-review and log to Google Sheets pipeline tab."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Deal Input", "type": "main", "index": 0 }]]
+    },
+    "Set Deal Input": {
+      "main": [[{ "node": "Agent 1 — Intake", "type": "main", "index": 0 }]]
+    },
+    "Agent 1 — Intake": {
+      "main": [[{ "node": "Parse Intake JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse Intake JSON": {
+      "main": [[
+        { "node": "Agent 2 — Market Intel",           "type": "main", "index": 0 },
+        { "node": "Read Past Deals — Google Sheets",  "type": "main", "index": 0 }
+      ]]
+    },
+    "Agent 2 — Market Intel": {
+      "main": [[{ "node": "Merge Agents", "type": "main", "index": 0 }]]
+    },
+    "Read Past Deals — Google Sheets": {
+      "main": [[{ "node": "Merge Agents", "type": "main", "index": 1 }]]
+    },
+    "Merge Agents": {
+      "main": [[
+        { "node": "Agent 3 — Screening",    "type": "main", "index": 0 },
+        { "node": "Agent 4 — Comparables",  "type": "main", "index": 0 }
+      ]]
+    },
+    "Agent 3 — Screening": {
+      "main": [[{ "node": "Agent 5 — Synthesis", "type": "main", "index": 0 }]]
+    },
+    "Agent 4 — Comparables": {
+      "main": [[{ "node": "Agent 5 — Synthesis", "type": "main", "index": 1 }]]
+    },
+    "Agent 5 — Synthesis": {
+      "main": [[{ "node": "Output — Ready for Review", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "meta": {
+    "description": "Deal Digest — Sagard Real Estate. 5 Claude agents: Intake → Market Intel + Google Sheets (parallel) → Merge → Screening + Comparables (parallel) → Synthesis → Human Review. Replace YOUR_ANTHROPIC_API_KEY_HERE in all HTTP Request nodes. Replace YOUR_GOOGLE_SHEET_ID_HERE in the Google Sheets node."
+  }
+}

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Deal Digest — Sagard Real Estate</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f6f6f4; --bg3:#eeeeeb;
+  --text:#1a1a18; --text2:#5c5c58; --text3:#9a9a94;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.18);
+  --green-bg:#eaf3de; --green:#2d6a0a;
+  --amber-bg:#faeeda; --amber:#7a4a0a;
+  --red-bg:#fceaea; --red:#9b2020;
+  --blue-bg:#e6f0fb; --blue:#0b4080;
+  --radius:8px; --radius-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg3); color:var(--text); min-height:100vh; padding:24px 16px; }
+.wrap { max-width:780px; margin:0 auto; background:var(--bg); border-radius:16px; border:0.5px solid var(--border2); padding:28px; }
+
+/* header */
+.hdr { display:flex; align-items:baseline; justify-content:space-between; padding-bottom:14px; border-bottom:0.5px solid var(--border); margin-bottom:22px; flex-wrap:wrap; gap:8px; }
+.hdr-left { display:flex; align-items:baseline; gap:10px; }
+.brand { font-size:11px; font-weight:600; letter-spacing:0.12em; color:var(--text3); text-transform:uppercase; }
+.product { font-size:22px; font-weight:500; letter-spacing:-0.02em; }
+.live { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text3); }
+.dot { width:6px; height:6px; border-radius:50%; background:#2d6a0a; }
+
+/* tabs */
+.tabs { display:flex; margin-bottom:18px; }
+.tab { padding:7px 18px; font-size:13px; font-family:var(--font); border:0.5px solid var(--border2); background:transparent; color:var(--text2); cursor:pointer; }
+.tab:first-child { border-radius:var(--radius) 0 0 var(--radius); }
+.tab:last-child  { border-radius:0 var(--radius) var(--radius) 0; border-left:none; }
+.tab.on { background:var(--text); color:#fff; border-color:var(--text); }
+
+/* inputs */
+textarea,input[type=text] { width:100%; padding:9px 12px; background:var(--bg2); border:0.5px solid var(--border2); border-radius:var(--radius); color:var(--text); font-size:14px; font-family:var(--font); outline:none; }
+textarea { resize:vertical; line-height:1.6; }
+.lbl { display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text3); margin-bottom:4px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.row  { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+
+/* buttons */
+.btn  { padding:8px 20px; background:var(--text); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-family:var(--font); cursor:pointer; font-weight:500; }
+.btn:hover { opacity:0.85; }
+.btn2 { padding:6px 14px; background:transparent; border:0.5px solid var(--border2); border-radius:var(--radius); font-size:12px; font-family:var(--font); cursor:pointer; color:var(--text2); }
+.btn2:hover { background:var(--bg2); }
+
+/* spinner */
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { width:30px; height:30px; border:2px solid var(--border2); border-top-color:var(--text); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 14px; }
+.loading { text-align:center; padding:36px 0; color:var(--text2); font-size:13px; }
+
+/* results */
+@keyframes fadein { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)} }
+.fade { animation:fadein 0.3s ease forwards; }
+.deal-hdr { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+.deal-name { font-size:17px; font-weight:500; }
+.deal-sub  { font-size:12px; color:var(--text2); margin-top:3px; }
+.eyebrow   { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text3); margin-bottom:3px; }
+.badge { padding:4px 14px; border-radius:20px; font-size:12px; font-weight:500; display:inline-block; }
+.b-warn { background:var(--amber-bg); color:var(--amber); }
+.b-pass { background:var(--green-bg); color:var(--green); }
+.b-fail { background:var(--red-bg);   color:var(--red);   }
+
+/* pills */
+.pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.pill  { background:var(--bg2); border-radius:var(--radius); padding:10px 14px; flex:1; min-width:80px; }
+.pill-lbl { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px; }
+.pill-val { font-size:17px; font-weight:500; }
+
+/* two col */
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px; }
+.card-title { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--text3); margin-bottom:10px; }
+
+/* criteria */
+.crit { display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:0.5px solid var(--border); }
+.crit:last-child { border-bottom:none; }
+.crit-ico { font-size:12px; flex-shrink:0; width:14px; margin-top:1px; }
+.crit-name { font-size:12px; font-weight:500; }
+.crit-note { font-size:11px; color:var(--text2); margin-top:1px; }
+
+/* risks */
+.risk { padding:7px 0; border-bottom:0.5px solid var(--border); }
+.risk:last-child { border-bottom:none; }
+.risk-hdr { display:flex; gap:6px; align-items:center; margin-bottom:3px; }
+.sev { font-size:9px; padding:2px 7px; border-radius:20px; font-weight:600; text-transform:uppercase; flex-shrink:0; }
+.sev-high   { background:var(--red-bg);   color:var(--red);   }
+.sev-medium { background:var(--amber-bg); color:var(--amber); }
+.sev-low    { background:var(--green-bg); color:var(--green); }
+.risk-name { font-size:12px; font-weight:500; }
+.risk-det  { font-size:11px; color:var(--text2); line-height:1.4; padding-left:46px; }
+
+/* intel */
+.intel { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px; margin-bottom:10px; }
+.intel-txt { font-size:13px; color:var(--text2); line-height:1.7; }
+.sources { margin-top:8px; font-size:11px; color:var(--text3); }
+
+/* ic box */
+.ic-box { background:var(--bg); border:2px solid var(--blue); border-radius:var(--radius-lg); padding:16px 18px; }
+.ic-hdr { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.ic-dot { width:6px; height:6px; border-radius:50%; background:var(--blue); }
+.ic-lbl { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--blue); }
+.edit-lbl { font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text3); margin-bottom:4px; }
+.edit-field { width:100%; padding:9px 10px; background:var(--bg2); border:0.5px dashed var(--border2); border-radius:var(--radius); color:var(--text2); font-size:13px; font-family:var(--font); line-height:1.6; resize:vertical; outline:none; margin-bottom:10px; }
+.edit-field:focus { border-style:solid; }
+.ic-actions { display:flex; gap:8px; align-items:center; }
+
+/* compare */
+.comp-wrap { margin-top:10px; background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px; }
+.comp-grid { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.comp-card { background:var(--bg2); border-radius:var(--radius); padding:10px 12px; flex:1; min-width:140px; }
+.comp-name { font-size:12px; font-weight:500; margin-bottom:2px; }
+.comp-sub  { font-size:11px; color:var(--text3); margin-bottom:6px; }
+.comp-data { font-size:11px; color:var(--text2); line-height:1.6; }
+.comp-badge { margin-top:6px; font-size:10px; padding:2px 8px; border-radius:20px; background:var(--blue-bg); color:var(--blue); display:inline-block; }
+.pattern { margin-top:10px; padding:10px 12px; background:var(--bg2); border-radius:var(--radius); font-size:13px; color:var(--text2); line-height:1.65; }
+
+/* error */
+.err { padding:14px 16px; background:var(--red-bg); border-radius:var(--radius-lg); color:var(--red); font-size:13px; line-height:1.6; margin-top:16px; }
+
+@media(max-width:560px) { .cols,.grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="hdr-left">
+      <span class="brand">Sagard Real Estate</span>
+      <span style="color:var(--border2)">·</span>
+      <span class="product">Deal Digest</span>
+    </div>
+    <div class="live"><span class="dot"></span>Live market data</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" onclick="setMode('paste')">Paste text</button>
+    <button class="tab"    onclick="setMode('form')">Fill form</button>
+  </div>
+
+  <!-- PASTE PANEL -->
+  <div id="paste-panel">
+    <textarea id="paste-txt" rows="6"
+      placeholder="Paste anything — broker email, OM excerpt, your own notes. Deal Digest extracts deal metrics automatically.&#10;&#10;e.g. 'Class A industrial, Denver I-70 corridor, 94% leased, WALT 4.2 yrs, asking $42.5M at 5.6% cap rate, 285k SF...'">
+    </textarea>
+    <div class="row">
+      <button class="btn2" onclick="loadSamplePaste()">Load sample</button>
+      <button class="btn"  onclick="runPaste()">Digest &amp; screen →</button>
+    </div>
+  </div>
+
+  <!-- FORM PANEL -->
+  <div id="form-panel" style="display:none">
+    <div class="grid2">
+      <div><label class="lbl">Deal name</label>      <input id="f-name"  placeholder="Park Towers Industrial"/></div>
+      <div><label class="lbl">Asset type</label>     <input id="f-type"  placeholder="Industrial / Logistics"/></div>
+      <div><label class="lbl">Location</label>       <input id="f-loc"   placeholder="Denver, CO"/></div>
+      <div><label class="lbl">Purchase price ($)</label><input id="f-price" placeholder="42500000"/></div>
+      <div><label class="lbl">Annual NOI ($)</label> <input id="f-noi"   placeholder="2380000"/></div>
+      <div><label class="lbl">Cap rate (%)</label>   <input id="f-cap"   placeholder="5.60"/></div>
+      <div><label class="lbl">Square footage</label> <input id="f-sqft"  placeholder="285000"/></div>
+      <div><label class="lbl">Occupancy (%)</label>  <input id="f-occ"   placeholder="94"/></div>
+    </div>
+    <div class="row">
+      <button class="btn2" onclick="loadSampleForm()">Load sample</button>
+      <button class="btn"  onclick="runForm()">Digest &amp; screen →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" style="margin-top:20px"></div>
+
+</div><!-- /wrap -->
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE'; // ← paste your key here
+const API_URL = 'http://localhost:8080';
+const MODEL   = 'claude-sonnet-4-6';
+
+// ─── PAST DEALS (Sagard/EverWest public record) ───────────────────────────
+const PAST_DEALS = [
+  { name:'I-20 West Portfolio',      loc:'Atlanta, GA',        year:2023, price:28.5, cap:6.20, sf:581750, outcome:'Exited $50M — 14.2% IRR', notes:'IC debated Steelcase concentration (42% of NOI). SW Atlanta was contrarian in 2016; proved out strongly.' },
+  { name:'Central Connection',       loc:'Denver, CO',         year:2023, price:67.0, cap:5.20, sf:194710, outcome:'In portfolio',             notes:'Bought from JP Morgan below replacement cost. WALT concern overridden by I-25/I-76/I-270 irreplaceable location.' },
+  { name:'Carson IOS / LA Ports',    loc:'Carson, CA',         year:2023, price:38.5, cap:4.80, sf:101175, outcome:'In portfolio',             notes:'Single tenant 100%. IOS storage yard unlocked 20% of value missed by traditional underwriting. Ports proximity irreplaceable.' },
+  { name:'Meadowlands Industrial',   loc:'East Rutherford, NJ',year:2022, price:37.1, cap:5.50, sf:148000, outcome:'In portfolio',             notes:'Sale-leaseback. National 3PL with IG-equivalent credit. Lesson: sale-leaseback motivation does not imply distress.' },
+  { name:'Avenel NJ Industrial',     loc:'Avenel, NJ',         year:2024, price:24.1, cap:4.40, sf:80468,  outcome:'In portfolio',             notes:'Lease expiry 13 months from close. In-place rent $13.20/SF vs market $19-22/SF — 44-67% upside at rollover.' },
+  { name:'Hanover MD Industrial',    loc:'Hanover, MD',        year:2024, price:33.5, cap:5.20, sf:130389, outcome:'In portfolio',             notes:'New construction 2023. BWI corridor Amazon/pharma demand. $257/SF well below replacement cost.' },
+  { name:'Peakview Apartments',      loc:'Denver, CO',         year:2022, price:78.0, cap:4.40, sf:0,      outcome:'Exited $115M — 19.8% IRR', notes:'Luxury multifamily. IC flagged supply wave risk. Infill DTC location with limited pipeline de-risked thesis.' },
+  { name:'Denver Platte Valley MF',  loc:'Denver, CO',         year:2020, price:0,    cap:3.80, sf:0,      outcome:'Passed — price',           notes:'IC passed at 3.8% cap. Comparable infill trading 4.2-4.4%. COVID uncertainty over-penalized growth assets in hindsight.' },
+  { name:'Charlotte Office Rdev',    loc:'Charlotte, NC',      year:2021, price:0,    cap:0,    sf:220000, outcome:'Passed — JV risk',         notes:'58% vacant. Kill shot was JV developer with only one incomplete prior project. Hard rule: minimum 2 exits before JV approval.' },
+  { name:'San Diego Logistics Hub',  loc:'San Diego, CA',      year:2024, price:89.0, cap:4.80, sf:310000, outcome:'In portfolio',             notes:'First pension co-invest. Governance protocol agreed pre-close. Two IG tenants. $287/SF vs $320-380 replacement cost.' }
+];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fmtM(n)  { return n > 0 ? '$' + n.toFixed(1) + 'M' : '—'; }
+function fmtSF(n) { return n > 0 ? n.toLocaleString() + ' SF' : '—'; }
+function el(id)   { return document.getElementById(id); }
+
+function setMode(m) {
+  el('paste-panel').style.display = m === 'paste' ? '' : 'none';
+  el('form-panel').style.display  = m === 'form'  ? '' : 'none';
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('on', (m==='paste'&&i===0)||(m==='form'&&i===1)));
+}
+
+function loadSamplePaste() {
+  el('paste-txt').value =
+    'Class A industrial portfolio of 3 buildings along Denver metro I-70 corridor. ' +
+    '94% leased with WALT of 4.2 years. Major tenants are regional distribution and ' +
+    'e-commerce fulfillment companies. Recent cap-ex improvements to dock doors and HVAC. ' +
+    'Seller is a private fund with wind-down timeline creating motivated sale dynamic. ' +
+    'Asking $42.5M — 5.60% cap rate — 285,000 SF — $149/SF.';
+}
+
+function loadSampleForm() {
+  const d = {
+    'f-name':'Park Towers Industrial','f-type':'Industrial / Logistics',
+    'f-loc':'Denver, CO','f-price':'42500000','f-noi':'2380000',
+    'f-cap':'5.60','f-sqft':'285000','f-occ':'94'
+  };
+  Object.entries(d).forEach(([id,v]) => el(id).value = v);
+}
+
+function showLoading(msg) {
+  el('results').innerHTML =
+    '<div class="loading"><div class="spinner"></div><p>' + msg + '</p></div>';
+}
+
+function showError(msg) {
+  el('results').innerHTML = '<div class="err"><strong>Error:</strong> ' + msg + '</div>';
+}
+
+// ─── API CALL ─────────────────────────────────────────────────────────────────
+async function callClaude(prompt, webSearch) {
+  const body = {
+    model: MODEL,
+    max_tokens: 1500,
+    messages: [{ role:'user', content: prompt }]
+  };
+  if (webSearch) {
+    body.tools = [{ type:'web_search_20250305', name:'web_search' }];
+  }
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error('HTTP ' + resp.status + ': ' + txt);
+  }
+  const data = await resp.json();
+  const text = (data.content || [])
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('');
+  return text.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
+}
+
+// ─── INTAKE: extract structured deal from raw text ────────────────────────────
+async function extractDeal(raw) {
+  const prompt =
+    'You are a real estate deal intake agent. Extract structured data from this text.\n' +
+    'Return ONLY valid JSON, no markdown fences:\n' +
+    '{"deal_name":"","asset_type":"","location":"","price_usd":0,"noi_usd":0,' +
+    '"cap_rate_pct":0,"sqft":0,"occupancy_pct":0,"walt_years":0,"description":"",' +
+    '"confidence":0.0,"missing_fields":[],"inferred_fields":[]}\n\n' +
+    'Text:\n' + raw;
+  const result = await callClaude(prompt, false);
+  return JSON.parse(result);
+}
+
+// ─── SCREEN: criteria + risks + market intel ──────────────────────────────────
+async function screenDeal(deal) {
+  const prompt =
+    'You are a senior investment analyst at Sagard Real Estate (formerly EverWest, $5.2B AUM).\n' +
+    'Strategy: industrial high-barrier markets, multifamily infill, select alternative sectors.\n' +
+    'Use web search to find CURRENT cap rates, vacancy, and rent data for this submarket.\n\n' +
+    'Deal:\n' + JSON.stringify(deal, null, 2) + '\n\n' +
+    'Return ONLY valid JSON (no markdown fences):\n' +
+    '{\n' +
+    '  "criteriaScreen":[\n' +
+    '    {"criterion":"Cap rate vs. market","status":"pass|warn|fail","note":"one sentence"},\n' +
+    '    {"criterion":"Market tier / location","status":"pass|warn|fail","note":"one sentence"},\n' +
+    '    {"criterion":"Asset class quality","status":"pass|warn|fail","note":"one sentence"},\n' +
+    '    {"criterion":"Lease duration / WALT","status":"pass|warn|fail","note":"one sentence"},\n' +
+    '    {"criterion":"Occupancy rate","status":"pass|warn|fail","note":"one sentence"},\n' +
+    '    {"criterion":"Tenant credit / concentration","status":"pass|warn|fail","note":"one sentence"}\n' +
+    '  ],\n' +
+    '  "keyRisks":[\n' +
+    '    {"risk":"name","severity":"high|medium|low","detail":"one sentence"},\n' +
+    '    {"risk":"name","severity":"high|medium|low","detail":"one sentence"},\n' +
+    '    {"risk":"name","severity":"high|medium|low","detail":"one sentence"},\n' +
+    '    {"risk":"name","severity":"high|medium|low","detail":"one sentence"}\n' +
+    '  ],\n' +
+    '  "marketContext":"2-3 sentences with specific data points from web search.",\n' +
+    '  "marketSources":["source 1","source 2","source 3"],\n' +
+    '  "recommendation":"proceed_to_ic|more_diligence|pass",\n' +
+    '  "recommendationRationale":"2-3 sentences.",\n' +
+    '  "icQuestions":["Q1","Q2","Q3"]\n' +
+    '}';
+  const result = await callClaude(prompt, true);
+  return JSON.parse(result);
+}
+
+// ─── COMPARE: find patterns in past deals ────────────────────────────────────
+async function compareDeals(deal) {
+  const prompt =
+    'You are a comparables analyst at Sagard Real Estate.\n' +
+    'Current deal:\n' + JSON.stringify(deal) + '\n\n' +
+    'Past Sagard deals:\n' + JSON.stringify(PAST_DEALS) + '\n\n' +
+    'Find the 3 most relevant past deals. Return ONLY valid JSON:\n' +
+    '{"matches":[{"name":"","similarity":"high|medium","reasons":[""],"differences":[""],"outcome":"","lesson":""}],' +
+    '"patternNote":"one sentence synthesis across all matches"}';
+  const result = await callClaude(prompt, false);
+  return JSON.parse(result);
+}
+
+// ─── RUNNERS ─────────────────────────────────────────────────────────────────
+async function runPaste() {
+  const raw = el('paste-txt').value.trim();
+  if (!raw) { alert('Paste some deal text first.'); return; }
+  showLoading('Extracting deal metrics from text…');
+  try {
+    const deal = await extractDeal(raw);
+    showLoading('Searching live market data and running screen…');
+    const screen = await screenDeal(deal);
+    renderResults(deal, screen);
+  } catch(e) { showError(e.message); }
+}
+
+async function runForm() {
+  const v  = id => el(id).value.trim();
+  const deal = {
+    deal_name:    v('f-name') || 'Untitled Deal',
+    asset_type:   v('f-type'),
+    location:     v('f-loc'),
+    price_usd:    parseFloat(v('f-price'))  || 0,
+    noi_usd:      parseFloat(v('f-noi'))    || 0,
+    cap_rate_pct: parseFloat(v('f-cap'))    || 0,
+    sqft:         parseFloat(v('f-sqft'))   || 0,
+    occupancy_pct:parseFloat(v('f-occ'))    || 0,
+    description:  '',
+    confidence:   1.0,
+    missing_fields:   [],
+    inferred_fields:  []
+  };
+  showLoading('Searching live market data and running screen…');
+  try {
+    const screen = await screenDeal(deal);
+    renderResults(deal, screen);
+  } catch(e) { showError(e.message); }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderResults(deal, result) {
+  const price = deal.price_usd    || 0;
+  const noi   = deal.noi_usd      || 0;
+  const sqft  = deal.sqft         || 0;
+  const cap   = deal.cap_rate_pct || 0;
+  const psf   = sqft > 0 ? Math.round(price / sqft) : 0;
+  const noipsf= sqft > 0 ? (noi / sqft).toFixed(2) : '—';
+
+  const recMap = {
+    proceed_to_ic: { label:'Proceed to IC', cls:'b-pass' },
+    more_diligence:{ label:'More diligence', cls:'b-warn' },
+    pass:          { label:'Pass',           cls:'b-fail' }
+  };
+  const rec = recMap[result.recommendation] || recMap.more_diligence;
+
+  // criteria rows
+  const critHTML = (result.criteriaScreen || []).map(c => {
+    const icon  = c.status==='pass' ? '✓' : c.status==='warn' ? '△' : '✕';
+    const color = c.status==='pass'
+      ? 'var(--green)' : c.status==='warn'
+      ? 'var(--amber)' : 'var(--red)';
+    return '<div class="crit">' +
+      '<span class="crit-ico" style="color:' + color + '">' + icon + '</span>' +
+      '<div><div class="crit-name">' + c.criterion + '</div>' +
+      '<div class="crit-note">'  + c.note      + '</div></div></div>';
+  }).join('');
+
+  // risk rows
+  const riskHTML = (result.keyRisks || []).map(r => {
+    const cls = 'sev-' + (r.severity || 'medium');
+    return '<div class="risk">' +
+      '<div class="risk-hdr">' +
+      '<span class="sev ' + cls + '">' + r.severity + '</span>' +
+      '<span class="risk-name">' + r.risk + '</span></div>' +
+      '<div class="risk-det">' + r.detail + '</div></div>';
+  }).join('');
+
+  // sources
+  const srcHTML = (result.marketSources || []).length > 0
+    ? '<div class="sources">Sources: ' + result.marketSources.join(' · ') + '</div>'
+    : '';
+
+  // ic questions
+  const qHTML = (result.icQuestions || [])
+    .map((q,i) =>
+      '<div style="display:flex;gap:8px;padding:4px 0">' +
+      '<span style="font-size:11px;color:var(--text3);flex-shrink:0;font-weight:600">' + (i+1) + '.</span>' +
+      '<span style="font-size:13px;color:var(--text2);line-height:1.5">' + q + '</span></div>')
+    .join('');
+
+  el('results').innerHTML =
+    '<div class="fade">' +
+
+    // deal header
+    '<div class="deal-hdr">' +
+      '<div>' +
+        '<div class="eyebrow">Digest ready</div>' +
+        '<div class="deal-name">' + deal.deal_name + '</div>' +
+        '<div class="deal-sub">'  + [deal.asset_type, deal.location, fmtSF(sqft)].filter(Boolean).join(' · ') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<span class="badge ' + rec.cls + '">' + rec.label + '</span>' +
+        '<button class="btn2" onclick="toggleCompare()">Compare past deals</button>' +
+      '</div>' +
+    '</div>' +
+
+    // metric pills
+    '<div class="pills">' +
+      '<div class="pill"><div class="pill-lbl">Price</div>'      + '<div class="pill-val">' + fmtM(price/1e6) + '</div></div>' +
+      '<div class="pill"><div class="pill-lbl">Cap rate</div>'   + '<div class="pill-val" style="color:var(--red)">' + cap.toFixed(2) + '%</div></div>' +
+      '<div class="pill"><div class="pill-lbl">Price / SF</div>' + '<div class="pill-val">' + (psf > 0 ? '$' + psf.toLocaleString() : '—') + '</div></div>' +
+      '<div class="pill"><div class="pill-lbl">NOI / SF</div>'   + '<div class="pill-val">' + (noipsf !== '—' ? '$' + noipsf : '—') + '</div></div>' +
+    '</div>' +
+
+    // criteria + risks
+    '<div class="cols">' +
+      '<div class="card"><div class="card-title">Criteria screen</div>' + critHTML + '</div>' +
+      '<div class="card"><div class="card-title">Risk flags</div>'      + riskHTML + '</div>' +
+    '</div>' +
+
+    // market intel
+    '<div class="intel">' +
+      '<div class="card-title">Market intelligence <span style="font-weight:400;font-size:10px;letter-spacing:0">(live web search)</span></div>' +
+      '<div class="intel-txt">' + (result.marketContext || '') + '</div>' +
+      srcHTML +
+    '</div>' +
+
+    // ic box
+    '<div class="ic-box">' +
+      '<div class="ic-hdr"><div class="ic-dot"></div>' +
+        '<div class="ic-lbl">Review &amp; edit before IC submission</div>' +
+        '<span style="margin-left:auto;font-size:10px;color:var(--text3)">Both fields editable</span>' +
+      '</div>' +
+      '<div class="edit-lbl">Screening rationale</div>' +
+      '<textarea id="edit-rat" class="edit-field">' + (result.recommendationRationale || '') + '</textarea>' +
+      '<div class="edit-lbl">IC questions to resolve</div>' +
+      '<textarea id="edit-q" class="edit-field" rows="3">' +
+        (result.icQuestions || []).map((q,i) => (i+1) + '. ' + q).join('\n') +
+      '</textarea>' +
+      '<div class="ic-actions">' +
+        '<button id="copy-btn" class="btn2" onclick="copyMemo()">Copy IC memo</button>' +
+        '<span style="font-size:11px;color:var(--text3)">or</span>' +
+        '<button class="btn" onclick="submitIC()">Submit to IC →</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div id="comp-section"></div>' +
+    '</div>';
+
+  // store deal for compare
+  window._currentDeal = deal;
+}
+
+// ─── COMPARE ─────────────────────────────────────────────────────────────────
+function toggleCompare() {
+  const sec = el('comp-section');
+  if (sec.innerHTML) { sec.innerHTML = ''; return; }
+
+  // show static cards immediately
+  const cardsHTML = PAST_DEALS.slice(0,6).map(d =>
+    '<div class="comp-card">' +
+      '<div class="comp-name">' + d.name + '</div>' +
+      '<div class="comp-sub">'  + d.loc + ' · ' + d.year + '</div>' +
+      '<div class="comp-data">' + fmtM(d.price) + (d.cap > 0 ? ' · ' + d.cap + '% cap' : '') + '</div>' +
+      '<div class="comp-badge">' + d.outcome + '</div>' +
+    '</div>'
+  ).join('');
+
+  sec.innerHTML =
+    '<div class="comp-wrap">' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">' +
+        '<div class="card-title" style="margin:0">Past deal comparables</div>' +
+        '<span style="font-size:10px;color:var(--text3)">Sagard / EverWest public record · Google Drive CSV in production</span>' +
+      '</div>' +
+      '<div class="comp-grid">' + cardsHTML + '</div>' +
+      '<button class="btn2" id="pattern-btn" onclick="runCompare()">Ask Claude to find patterns →</button>' +
+      '<div id="pattern-result"></div>' +
+    '</div>';
+}
+
+async function runCompare() {
+  el('pattern-btn').textContent = 'Analysing…';
+  el('pattern-btn').disabled = true;
+  try {
+    const comp = await compareDeals(window._currentDeal || {});
+    let html = '<div class="pattern">';
+    if (comp.patternNote) html += '<strong>Pattern:</strong> ' + comp.patternNote + '<br><br>';
+    (comp.matches || []).forEach(m => {
+      html += '<strong>' + m.name + '</strong> (' + m.similarity + ' similarity) — ' + m.lesson + '<br>';
+    });
+    html += '</div>';
+    el('pattern-result').innerHTML = html;
+  } catch(e) {
+    el('pattern-result').innerHTML = '<div style="color:var(--red);font-size:12px;margin-top:8px">Error: ' + e.message + '</div>';
+  }
+  el('pattern-btn').textContent = 'Ask Claude to find patterns →';
+  el('pattern-btn').disabled = false;
+}
+
+// ─── IC ACTIONS ───────────────────────────────────────────────────────────────
+function copyMemo() {
+  const r = el('edit-rat'), q = el('edit-q');
+  if (!r) return;
+  const txt = 'DEAL DIGEST — IC MEMO\nSagard Real Estate\n\n' + r.value + '\n\nIC QUESTIONS:\n' + q.value;
+  navigator.clipboard.writeText(txt).then(() => {
+    const b = el('copy-btn');
+    b.textContent = 'Copied ✓';
+    setTimeout(() => b.textContent = 'Copy IC memo', 2000);
+  });
+}
+
+function submitIC() {
+  alert('Deal package submitted to IC queue.\nAn investment professional will review and schedule committee time.');
+}
+</script>
+</body>
+</html>
