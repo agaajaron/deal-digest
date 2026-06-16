@@ -273,10 +273,7 @@ Analysts know things the model doesn't (sponsor relationship, off-market pricing
 
 ## Security notes
 
-- Never commit `proxy.ps1` or `deal_digest_n8n_final.json` with a real API key embedded
-- Add `proxy.ps1` to `.gitignore` or use environment variable injection
-- In n8n, store the key as a **Header Auth credential**, not a literal string in the node config
-- The `START.bat` / proxy listens on `localhost` only — it is not exposed to the network
+
 
 ---
 
