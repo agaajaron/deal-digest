@@ -1,4 +1,4 @@
-# Deal Digest — Sagard Real Estate
+# Deal Digest —  Multiagentic Application for Real Estate Analysis, Market Research, comparison with on prem data and summarization (n8n)
 
 > **AI-powered deal intake and investment screening** — paste a broker email or OM excerpt and get a structured IC memo in seconds.
 
